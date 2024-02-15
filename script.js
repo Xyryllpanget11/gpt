@@ -5,7 +5,8 @@ const themeButton = document.querySelector("#theme-btn");
 const deleteButton = document.querySelector("#delete-btn");
 
 let userText = null;
-const API_KEY = "PASTE-YOUR-API-KEY-HERE"; // Paste your API key here
+
+const API_URL = "https://llama.aliestercrowley.com/api?prompt=";
 
 const loadDataFromLocalstorage = () => {
     // Load saved chats and theme from local storage and apply/add on the page
@@ -32,40 +33,34 @@ const createChatElement = (content, className) => {
 }
 
 const getChatResponse = async (incomingChatDiv) => {
-    const API_URL = "https://api.openai.com/v1/completions";
-    const pElement = document.createElement("p");
+    const prompt = userText;
 
-    // Define the properties and data for the API request
-    const requestOptions = {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${API_KEY}`
-        },
-        body: JSON.stringify({
-            model: "text-davinci-003",
-            prompt: userText,
-            max_tokens: 2048,
-            temperature: 0.2,
-            n: 1,
-            stop: null
-        })
-    }
-
-    // Send POST request to API, get response and set the reponse as paragraph element text
+    // Fetch response from the new endpoint
     try {
-        const response = await (await fetch(API_URL, requestOptions)).json();
-        pElement.textContent = response.choices[0].text.trim();
-    } catch (error) { // Add error class to the paragraph element and set error text
+        const response = await fetch(`${API_URL}${prompt}`);
+        const responseData = await response.json();
+
+        // Handle response data as needed
+        // For example, you can directly set the response as paragraph element text
+        const pElement = document.createElement("p");
+        pElement.textContent = responseData.trim();
+
+        incomingChatDiv.querySelector(".typing-animation").remove();
+        incomingChatDiv.querySelector(".chat-details").appendChild(pElement);
+        localStorage.setItem("all-chats", chatContainer.innerHTML);
+        chatContainer.scrollTo(0, chatContainer.scrollHeight);
+    } catch (error) {
+        // Handle errors
+        console.error("Error fetching data:", error);
+        const pElement = document.createElement("p");
         pElement.classList.add("error");
         pElement.textContent = "Oops! Something went wrong while retrieving the response. Please try again.";
-    }
 
-    // Remove the typing animation, append the paragraph element and save the chats to local storage
-    incomingChatDiv.querySelector(".typing-animation").remove();
-    incomingChatDiv.querySelector(".chat-details").appendChild(pElement);
-    localStorage.setItem("all-chats", chatContainer.innerHTML);
-    chatContainer.scrollTo(0, chatContainer.scrollHeight);
+        incomingChatDiv.querySelector(".typing-animation").remove();
+        incomingChatDiv.querySelector(".chat-details").appendChild(pElement);
+        localStorage.setItem("all-chats", chatContainer.innerHTML);
+        chatContainer.scrollTo(0, chatContainer.scrollHeight);
+    }
 }
 
 const copyResponse = (copyBtn) => {
