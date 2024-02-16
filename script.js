@@ -1,3 +1,6 @@
+// Import Axios library
+import axios from 'axios';
+
 const chatInput = document.querySelector("#chat-input");
 const sendButton = document.querySelector("#send-btn");
 const chatContainer = document.querySelector(".chat-container");
@@ -35,20 +38,26 @@ const createChatElement = (content, className) => {
 const getChatResponse = async (incomingChatDiv) => {
     const prompt = userText;
 
-    // Fetch response from the new endpoint
     try {
-        const response = await fetch(`${API_URL}${prompt}`);
-        const responseData = await response.json();
+        // Use Axios to make the API request
+        const response = await axios.get(`${API_URL}${prompt}`);
 
-        // Handle response data as needed
-        // For example, you can directly set the response as paragraph element text
-        const pElement = document.createElement("p");
-        pElement.textContent = responseData.trim();
+        // Check if the response is successful
+        if (response.status === 200) {
+            // Extract the response data
+            const responseData = response.data;
 
-        incomingChatDiv.querySelector(".typing-animation").remove();
-        incomingChatDiv.querySelector(".chat-details").appendChild(pElement);
-        localStorage.setItem("all-chats", chatContainer.innerHTML);
-        chatContainer.scrollTo(0, chatContainer.scrollHeight);
+            // Handle the response data
+            const pElement = document.createElement("p");
+            pElement.textContent = responseData.trim();
+
+            incomingChatDiv.querySelector(".typing-animation").remove();
+            incomingChatDiv.querySelector(".chat-details").appendChild(pElement);
+            localStorage.setItem("all-chats", chatContainer.innerHTML);
+            chatContainer.scrollTo(0, chatContainer.scrollHeight);
+        } else {
+            throw new Error('Request failed with status code ' + response.status);
+        }
     } catch (error) {
         // Handle errors
         console.error("Error fetching data:", error);
