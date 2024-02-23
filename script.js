@@ -1,6 +1,3 @@
-// Import Axios library
-import axios from 'axios';
-
 const chatInput = document.querySelector("#chat-input");
 const sendButton = document.querySelector("#send-btn");
 const chatContainer = document.querySelector(".chat-container");
@@ -8,8 +5,7 @@ const themeButton = document.querySelector("#theme-btn");
 const deleteButton = document.querySelector("#delete-btn");
 
 let userText = null;
-
-const API_URL = "https://llama.aliestercrowley.com/api?prompt=";
+const API_KEY = "PASTE-YOUR-API-KEY-HERE"; // Paste your API key here
 
 const loadDataFromLocalstorage = () => {
     // Load saved chats and theme from local storage and apply/add on the page
@@ -19,8 +15,8 @@ const loadDataFromLocalstorage = () => {
     themeButton.innerText = document.body.classList.contains("light-mode") ? "dark_mode" : "light_mode";
 
     const defaultText = `<div class="default-text">
-                            <h1>XyAi</h1>
-                            <p>CHAT WITH XyAi YOUR VIRTUAL ASSISTANT CREATED BY TEAM XY</p>
+                            <h1>ChatGPT Clone</h1>
+                            <p>Start a conversation and explore the power of AI.<br> Your chat history will be displayed here.</p>
                         </div>`
 
     chatContainer.innerHTML = localStorage.getItem("all-chats") || defaultText;
@@ -36,40 +32,40 @@ const createChatElement = (content, className) => {
 }
 
 const getChatResponse = async (incomingChatDiv) => {
-    const prompt = userText;
+    const API_URL = "https://api.openai.com/v1/completions";
+    const pElement = document.createElement("p");
 
+    // Define the properties and data for the API request
+    const requestOptions = {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${API_KEY}`
+        },
+        body: JSON.stringify({
+            model: "text-davinci-003",
+            prompt: userText,
+            max_tokens: 2048,
+            temperature: 0.2,
+            n: 1,
+            stop: null
+        })
+    }
+
+    // Send POST request to API, get response and set the reponse as paragraph element text
     try {
-        // Use Axios to make the API request
-        const response = await axios.get(`${API_URL}${prompt}`);
-
-        // Check if the response is successful
-        if (response.status === 200) {
-            // Extract the response data
-            const responseData = response.data;
-
-            // Handle the response data
-            const pElement = document.createElement("p");
-            pElement.textContent = responseData.trim();
-
-            incomingChatDiv.querySelector(".typing-animation").remove();
-            incomingChatDiv.querySelector(".chat-details").appendChild(pElement);
-            localStorage.setItem("all-chats", chatContainer.innerHTML);
-            chatContainer.scrollTo(0, chatContainer.scrollHeight);
-        } else {
-            throw new Error('Request failed with status code ' + response.status);
-        }
-    } catch (error) {
-        // Handle errors
-        console.error("Error fetching data:", error);
-        const pElement = document.createElement("p");
+        const response = await (await fetch(API_URL, requestOptions)).json();
+        pElement.textContent = response.choices[0].text.trim();
+    } catch (error) { // Add error class to the paragraph element and set error text
         pElement.classList.add("error");
         pElement.textContent = "Oops! Something went wrong while retrieving the response. Please try again.";
-
-        incomingChatDiv.querySelector(".typing-animation").remove();
-        incomingChatDiv.querySelector(".chat-details").appendChild(pElement);
-        localStorage.setItem("all-chats", chatContainer.innerHTML);
-        chatContainer.scrollTo(0, chatContainer.scrollHeight);
     }
+
+    // Remove the typing animation, append the paragraph element and save the chats to local storage
+    incomingChatDiv.querySelector(".typing-animation").remove();
+    incomingChatDiv.querySelector(".chat-details").appendChild(pElement);
+    localStorage.setItem("all-chats", chatContainer.innerHTML);
+    chatContainer.scrollTo(0, chatContainer.scrollHeight);
 }
 
 const copyResponse = (copyBtn) => {
@@ -84,7 +80,7 @@ const showTypingAnimation = () => {
     // Display the typing animation and call the getChatResponse function
     const html = `<div class="chat-content">
                     <div class="chat-details">
-                        <img src="chatbot.jpg" alt="chatbot-img">
+                        <img src="images/chatbot.jpg" alt="chatbot-img">
                         <div class="typing-animation">
                             <div class="typing-dot" style="--delay: 0.2s"></div>
                             <div class="typing-dot" style="--delay: 0.3s"></div>
@@ -110,7 +106,7 @@ const handleOutgoingChat = () => {
 
     const html = `<div class="chat-content">
                     <div class="chat-details">
-                        <img src="user.jpg" alt="user-img">
+                        <img src="images/user.jpg" alt="user-img">
                         <p>${userText}</p>
                     </div>
                 </div>`;
